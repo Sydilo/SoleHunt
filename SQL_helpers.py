@@ -22,3 +22,6 @@ class SQLCommandor(SQLConnector):
 
     def sql_update(self, query, params=()):
         self.sql_insert(query, params)
+
+    def sql_delete(self, query, params=()):
+        self.sql_insert(query, params)

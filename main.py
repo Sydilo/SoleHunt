@@ -17,7 +17,7 @@ def start(message):
 
 @bot.message_handler(func=lambda message: message.text == "👟 Get sneakers")
 def get_new_sneakers(message):
-    if user and user.user_last_button_press_timer and time() - user.user_last_button_press_timer < 5:
+    if user and user.user_last_button_press_timer and time() - user.user_last_button_press_timer < 14400:
         display_time_until_next_attempt(user, bot, message)
     else:
         update_time_until_next_attempt(user)

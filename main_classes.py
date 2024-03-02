@@ -196,3 +196,11 @@ class Sneakers:
         related_sneaker_id, = SQLCommandor().sql_select(query, params)[0]
 
         return related_sneaker_id
+
+    def delete_used_promo_code(self):
+        query = """
+        DELETE FROM promo_sneakers WHERE promo_code = ?
+        """
+        params = (self.__promo_code,)
+
+        SQLCommandor().sql_delete(query, params)

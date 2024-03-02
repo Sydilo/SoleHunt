@@ -23,16 +23,16 @@ def make_main_markup():
 def send_start_message(bot, message, markup):
     text = f"""
     <b>🫱🏿 Welcome {message.from_user.first_name} 🫲🏻</b>\n
-    SoleHunt Bot: Your gateway to sneaker paradise! \n
-    Join the ultimate sneaker community where you can hunt down coveted kicks, showcase your collection, and earn ratings from fellow enthusiasts. \n
-    Dive into the exhilarating world of sneaker culture and elevate your style with every step. \n
-    Ready to lace up and level up? Get started with SoleHunt now!"""
+SoleHunt Bot: Your gateway to sneaker paradise! \n
+Join the ultimate sneaker community where you can hunt down coveted kicks, showcase your collection, and earn ratings from fellow enthusiasts. \n
+Dive into the exhilarating world of sneaker culture and elevate your style with every step. \n
+Ready to lace up and level up? Get started with SoleHunt now!"""
 
     bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="HTML")
 
 
 def display_time_until_next_attempt(user, bot, message):
-    time_left_in_sec = 5 - (time() - user.user_last_button_press_timer)
+    time_left_in_sec = 14400 - (time() - user.user_last_button_press_timer)
     time_left = timedelta(seconds=time_left_in_sec)
     formatted_time = str(time_left).split('.')[0]
 
@@ -171,13 +171,18 @@ def define_user_league_and_return(user, bot, message):
 
 
 def verify_promo_code(user, bot, message):
-    related_sneaker_id = Sneakers(promo_code=message.text).get_sneaker_id_by_promo_code()
+    promo_code = message.text
+    try:
+        related_sneaker_id = Sneakers(promo_code=promo_code).get_sneaker_id_by_promo_code()
 
-    if related_sneaker_id:
-        promo_sneaker = Sneaker(related_sneaker_id)
-        send_received_promo_sneaker_and_update_user_rating(user, bot, message, promo_sneaker)
-    else:
-        bot.reply_to(message, "🤨 Wrong promo-code.")
+        if related_sneaker_id:
+            Sneakers(promo_code=promo_code).delete_used_promo_code()
+            promo_sneaker = Sneaker(related_sneaker_id)
+            send_received_promo_sneaker_and_update_user_rating(user, bot, message, promo_sneaker)
+        else:
+            bot.reply_to(message, "🤨 Wrong promo-code or promo-code is already used.")
+    except IndexError:
+        bot.reply_to(message, "🤨 Wrong promo-code or promo-code is already used.")
 
 
 def send_received_promo_sneaker_and_update_user_rating(user, bot, message, promo_sneaker):
