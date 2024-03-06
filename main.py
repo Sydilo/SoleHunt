@@ -62,17 +62,20 @@ def get_sneakers_house_menu(message):
 
 @bot.callback_query_handler(func=lambda call: call.data == "get_rating")
 def get_rating(call):
-    define_user_league_and_return(user, bot, call.message)
+    define_user_league(user)
+    bot.send_message(call.message.chat.id, f"Your rating: {user.user_rating}\nYour league: {user.user_league}")
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "get_global_rating")
+def get_global_rating(call):
+    define_user_league(user)
+    get_topn_rating(bot, call.message, 20)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "enter_promo_code")
 def enter_promo_code(call):
     bot.send_message(call.message.chat.id, "⌨️ Enter a promo-code:")
-
-
-@bot.message_handler(func=lambda message: True)
-def promo_code(message):
-    verify_promo_code(user, bot, message)
+    bot.register_next_step_handler(call.message, verify_promo_code, user, bot)
 
 
 if __name__ == "__main__":

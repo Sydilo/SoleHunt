@@ -4,6 +4,7 @@ from datetime import timedelta
 from time import time
 from telebot import types
 
+import SQL_helpers
 from main_classes import Sneakers, Sneaker
 
 
@@ -98,7 +99,7 @@ def display_user_sneakers_or_display_error_message(user, bot, message):
     if user_sneakers:
         show_sneakers(bot, message, 0, len(user_sneakers) - 1, user_sneakers)
     else:
-        bot.send_message(message.cat.id, "😓 You dont have any sneakers yet")
+        bot.send_message(message.chat.id, "😓 You dont have any sneakers yet")
 
 
 def get_user_sneakers(user):
@@ -138,39 +139,63 @@ def make_show_sneakers_markup(start_index, end_index):
 def make_sneakers_house_menu_markup():
     markup = types.InlineKeyboardMarkup()
 
-    start_battleButton = types.InlineKeyboardButton("⚔️ Start battle", callback_data="start_battle")
-    get_ratingButton = types.InlineKeyboardButton("🏆 Rating", callback_data="get_rating")
+    get_ratingButton = types.InlineKeyboardButton("🥇 Rating", callback_data="get_rating")
+    get_global_ratingButton = types.InlineKeyboardButton("🏆 Global rating", callback_data="get_global_rating")
     enter_promo_codeButton = types.InlineKeyboardButton("🎁 Enter promo-code", callback_data="enter_promo_code")
 
-    markup.row(start_battleButton)
-    markup.row(get_ratingButton)
+    markup.row(get_ratingButton, get_global_ratingButton)
     markup.row(enter_promo_codeButton)
 
     return markup
 
 
-def define_user_league_and_return(user, bot, message):
-    user_rating = user.get_user_rating()
+def define_user_league(user):
+    user_rating = user.user_rating
+    print(user_rating)
 
     leagues = {
-        range(100, 500): "wooden",
-        range(500, 2000): "steel",
+        range(100, 500): "wood",
+        range(500, 2000): "stone",
         range(2000, 5000): "bronze",
-        range(5000, 10000): "iron",
-        range(10000, 20000): "golden",
-        range(20000, 50000): "diamond",
-        range(50000, 100_000): "absolute",
-        range(100_000, 1_000_000): "?"
+        range(5000, 10000): "silver",
+        range(10000, 20000): "gold",
+        range(20000, 50000): "crystal",
+        range(50000, 100_000): "elite",
+        range(100_000, 1_000_000): "champion",
+        range(1_000_000, 10_000_000): "legend",
+        range(10_000_000, 100_000_000): "?"
     }
 
     for key in leagues:
         if user_rating in key:
             user.user_league = leagues[key]
 
-    bot.send_message(message.chat.id, f"Your rating: {user.user_rating}\nYour league: {user.user_league}")
+    print(user.user_league)
 
 
-def verify_promo_code(user, bot, message):
+def get_topn_rating(bot, message, n):
+    query = "SELECT user_id, user_rating, user_league FROM users ORDER BY user_rating DESC LIMIT ?;"
+    params = (n, )
+
+    ratings = SQL_helpers.SQLCommandor().sql_select(query, params)
+    text = "place. name - rating - league\n\n"
+    for place, ratings in enumerate(ratings, 1):
+        user_id, rating, league = ratings
+        first_name = bot.get_chat_member(user_id, user_id).user.first_name
+        match place:
+            case 1:
+                text += f"🥇{place}. {first_name} - {rating} - {league}\n"
+            case 2:
+                text += f"🥈{place}. {first_name} - {rating} - {league}\n"
+            case 3:
+                text += f"🥉{place}. {first_name} - {rating} - {league}\n"
+            case _:
+                text += f"{place}. {first_name} - {rating} - {league}\n"
+
+    bot.send_message(message.chat.id, text)
+
+
+def verify_promo_code(message, user, bot):
     promo_code = message.text
     try:
         related_sneaker_id = Sneakers(promo_code=promo_code).get_sneaker_id_by_promo_code()
@@ -178,6 +203,7 @@ def verify_promo_code(user, bot, message):
         if related_sneaker_id:
             Sneakers(promo_code=promo_code).delete_used_promo_code()
             promo_sneaker = Sneaker(related_sneaker_id)
+            define_user_league(user)
             send_received_promo_sneaker_and_update_user_rating(user, bot, message, promo_sneaker)
         else:
             bot.reply_to(message, "🤨 Wrong promo-code or promo-code is already used.")

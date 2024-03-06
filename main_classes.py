@@ -2,7 +2,7 @@ from SQL_helpers import SQLCommandor
 
 
 class User:
-    def __init__(self, user_id, user_rating=0, user_league='wooden', user_last_button_press_timer=0):
+    def __init__(self, user_id, user_rating=0, user_league='wood', user_last_button_press_timer=0):
         self.__user_id = user_id
         self.__user_rating = user_rating
         self.__user_league = user_league
@@ -98,15 +98,15 @@ class User:
 
     @property
     def user_rating(self):
-        return self.__user_rating
+        return self.get_user_rating()
 
     @property
     def user_league(self):
-        return self.__user_league
+        return self.get_user_league()
 
     @property
     def user_last_button_press_timer(self):
-        return self.__user_last_button_press_timer
+        return self.get_user_last_button_press_timer()
 
     @user_rating.setter
     def user_rating(self, value):
